@@ -3,85 +3,76 @@ import time
 import ntptime
 import json
 import machine
-from machine import Pin, SPI, I2S
+import gc
+import urequests
+from machine import Pin, SPI
 from max7219 import Matrix8x8
 
 # --- CONFIGURATION ---
 WIFI_SSID = "Homelan"
 WIFI_PASS = "Ihatecheese"
 SCHEDULE_FILE = "schedule.json"
+EID_DATE = "2026-03-20"
 
-# --- HARDWARE PINS (ESP32-C3) ---
-# MAX7219 (Based on your C3PO project notes)
-# DIN=GPIO7, CLK=GPIO6, CS=GPIO2
+HA_URL = "http://192.168.1.22:8123/api/services/media_player/play_media"
+HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4YzJjOGFlMTFhNzU0MDQ0YjA4MTZhN2I0ZmM4NGQ0OSIsImlhdCI6MTc3MTM2NDU2MSwiZXhwIjoyMDg2NzI0NTYxfQ._TDC37qVaQUfTIxBbIpg8VbjSGN4Gie-n_DYCYQcD9Q"
+HA_ENTITY_ID = "media_player.bedroom_speaker" 
+ADHAN_URL = "http://192.168.1.22:8123/api/file_upload/019c7ecd944de0a65bfeb119c444b67f" 
+TAKBEER_URL = "http://192.168.1.22:8123/api/file_upload/019c85a21a3436b402ac33c30cfc65fe"
+
 SCK_PIN = 6
 MOSI_PIN = 7
 CS_PIN = 2
 
-# PCM5102A I2S (Pins for when it arrives)
-# C3 I2S pins are flexible, but these are standard:
-I2S_BCK = 4
-I2S_LRCK = 5
-I2S_DIN = 18
-
-# Audio settings
-SAMPLE_RATE = 11025
-BITS_PER_SAMPLE = 16
-
-# --- SETUP ---
-# SPI for MAX7219
+# SPI Setup
 spi = SPI(1, baudrate=1000000, polarity=0, phase=0, sck=Pin(SCK_PIN), mosi=Pin(MOSI_PIN))
 cs = Pin(CS_PIN, Pin.OUT)
 display = Matrix8x8(spi, cs, 4)
 
-# I2S for PCM5102A (Initialised but won't do anything without hardware)
-# audio_out = I2S(0, sck=Pin(I2S_BCK), ws=Pin(I2S_LRCK), sd=Pin(I2S_DIN),
-#                 mode=I2S.TX, bits=BITS_PER_SAMPLE, format=I2S.MONO,
-#                 rate=SAMPLE_RATE, ibuf=10240)
-
-def connect_wifi():
+def trigger_audio(url):
+    print("DEBUG: Triggering Audio:", url)
     display.fill(0)
-    display.text("WIFI...", 0, 0, 1)
     display.show()
+    time.sleep(0.5)
+    
+    gc.collect()
+    headers = {"Authorization": "Bearer " + HA_TOKEN, "Content-Type": "application/json"}
+    
+    data = {
+        "entity_id": HA_ENTITY_ID,
+        "media_content_id": url,
+        "media_content_type": "music" 
+    }
+    
+    try:
+        # Set volume to 50%
+        v_url = HA_URL.replace("play_media", "volume_set")
+        urequests.post(v_url, json={"entity_id": HA_ENTITY_ID, "volume_level": 0.5}, headers=headers, timeout=5).close()
+        
+        r = urequests.post(HA_URL, json=data, headers=headers, timeout=15)
+        print("DEBUG: HA Status:", r.status_code)
+        r.close()
+    except Exception as e:
+        print("DEBUG: HA Error:", e)
+    
+    time.sleep(1)
+
+def connect_and_sync():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    if not wlan.isconnected():
-        print('Connecting to WiFi...')
-        wlan.connect(WIFI_SSID, WIFI_PASS)
-        while not wlan.isconnected():
-            time.sleep(1)
-    print('Connected:', wlan.ifconfig())
-
-def sync_time():
-    try:
-        ntptime.settime()
-        # Offset for London (GMT/BST)
-        # 0 for GMT, 3600 for BST. Feb/March is GMT.
-        print("Time synced")
-    except:
-        print("Time sync failed")
-
-def play_adhan():
-    print("Playing Adhan...")
-    # try:
-    #     with open("adhan.wav", "rb") as f:
-    #         f.seek(44) # Skip WAV header
-    #         chunk = bytearray(10240)
-    #         while True:
-    #             num_read = f.readinto(chunk)
-    #             if num_read == 0: break
-    #             audio_out.write(chunk[:num_read])
-    # except Exception as e:
-    #     print("Audio error:", e)
-
-def scroll_text(text):
-    print("Scrolling:", text)
-    # Using your max7219 driver logic
-    for x in range(32, -len(text)*8, -1):
-        display.fill(0)
-        display.text(text, x, 0, 1)
-        display.show()
-        time.sleep(0.05)
+    wlan.connect(WIFI_SSID, WIFI_PASS)
+    timeout = 20
+    while not wlan.isconnected() and timeout > 0:
+        time.sleep(1)
+        timeout -= 1
+    if wlan.isconnected():
+        try:
+            ntptime.host = "uk.pool.ntp.org"
+            ntptime.settime()
+            return True
+        except:
+            return True 
+    return False
 
 def get_today_schedule():
     now = time.localtime()
@@ -90,72 +81,130 @@ def get_today_schedule():
         with open(SCHEDULE_FILE, "r") as f:
             data = json.load(f)
             for index, day in enumerate(data):
-                if day["date"] == today_str:
-                    return day, index + 1 # Return day and the Ramadhan Day number
+                if day.get("date") == today_str:
+                    return day, index + 1
     except:
         pass
     return None, None
 
+def scroll_text(text, b_level=0):
+    display.brightness(b_level)
+    for x in range(32, -len(text)*8, -1):
+        display.fill(0)
+        display.text(text, x, 0, 1)
+        display.show()
+        time.sleep(0.04)
+    display.brightness(0)
+
+def draw_clock(h, m, blink):
+    display.fill(0)
+    sh = "{:02d}".format(h)
+    sm = "{:02d}".format(m)
+    display.framebuf.text(sh[0], 0, 0, 1)
+    display.framebuf.text(sh[1], 7, 0, 1)
+    display.framebuf.text(sm[0], 17, 0, 1)
+    display.framebuf.text(sm[1], 24, 0, 1)
+    if blink:
+        display.framebuf.pixel(15, 2, 1)
+        display.framebuf.pixel(15, 5, 1)
+    display.show()
+
 def main_loop():
-    connect_wifi()
-    sync_time()
-    
-    display.brightness(4)
+    connect_and_sync()
+    display.brightness(0)
+    current_mode = "TIME"
+    last_sec = -1
     
     while True:
+        gc.collect()
         now = time.localtime()
-        current_h = now[3]
-        current_m = now[4]
-        current_s = now[5]
+        today_str = "{:04d}-{:02d}-{:02d}".format(now[0], now[1], now[2])
+        is_eid = (today_str == EID_DATE)
         
-        sched, day_num = get_today_schedule()
-        
-        if sched:
-            h_s, m_s = map(int, sched["sahoor"].split(":"))
-            h_i, m_i = map(int, sched["iftar"].split(":"))
-            
-            # Check for triggers
-            if current_h == h_s and current_m == m_s and current_s == 0:
-                play_adhan()
-            if current_h == h_i and current_m == m_i and current_s == 0:
-                play_adhan()
-                scroll_text("Allahumma laka sumtu, wa alaa rizqika aftartu.")
+        h, m, s = now[3], now[4], now[5]
+        if s == last_sec:
+            time.sleep(0.1)
+            continue
+        last_sec = s
 
-            # 5 Minute Countdown Logic
-            target_h, target_m = None, None
-            if (h_s * 60 + m_s) - (current_h * 60 + current_m) <= 5 and (h_s * 60 + m_s) > (current_h * 60 + current_m):
-                target_h, target_m = h_s, m_s
-                label = "SEHRI"
-            elif (h_i * 60 + m_i) - (current_h * 60 + current_m) <= 5 and (h_i * 60 + m_i) > (current_h * 60 + current_m):
-                target_h, target_m = h_i, m_i
-                label = "IFTAR"
-
-            if target_h is not None:
-                diff_sec = ((target_h * 60 + target_m) * 60) - ((current_h * 60 + current_m) * 60 + current_s)
-                mins = diff_sec // 60
-                secs = diff_sec % 60
-                
-                # Alternate between scrolling label and static countdown
-                if current_s % 10 < 5:
-                    scroll_text(label)
-                else:
-                    display.fill(0)
-                    if mins >= 10:
-                        display.text("{:02d}:{:02d}".format(mins, secs), -4, 0, 1)
-                    else:
-                        display.text("{:01d}:{:02d}".format(mins, secs), 0, 0, 1)
-                    display.show()
-                    time.sleep(1)
-            else:
-                # Cycle between Time and Ramadhan Day
-                # Show day number if it's seconds 30-45 of every minute
-                if current_s >= 30 and current_s < 45:
-                    scroll_text("DAY {}".format(day_num))
-                else:
-                    scroll_text("{:02d}:{:02d}".format(current_h, current_m))
+        # --- AUDIO TRIGGERS ---
+        if is_eid:
+            # Adhan at 4:35 AM on Eid day
+            if h == 4 and m == 35 and s == 0:
+                trigger_audio(ADHAN_URL)
+            # Takbeer every 15 mins between 7am and 9am
+            if 7 <= h <= 9:
+                if m % 15 == 0 and s == 0:
+                    if h < 9 or (h == 9 and m == 0):
+                        trigger_audio(TAKBEER_URL)
         else:
-            # Not a Ramadhan day in schedule
-            scroll_text("{:02d}:{:02d}".format(current_h, current_m))
+            sched, day_num = get_today_schedule()
+            if sched:
+                h_s, m_s = map(int, sched["sahoor"].split(":"))
+                h_i, m_i = map(int, sched["iftar"].split(":"))
+                if h == h_s and m == m_s and s == 0: 
+                    trigger_audio(ADHAN_URL)
+                if h == h_i and m == m_i and s == 0: 
+                    trigger_audio(ADHAN_URL)
+
+        # --- DISPLAY MODES ---
+        new_mode = "TIME"
+        if is_eid:
+            # Scroll for 30s every 30s
+            # 30-59s phase: Scroll "Eid Mubarak"
+            if 30 <= s < 60:
+                new_mode = "EID_SCROLL"
+        else:
+            sched, day_num = get_today_schedule()
+            if sched:
+                h_s, m_s = map(int, sched["sahoor"].split(":"))
+                h_i, m_i = map(int, sched["iftar"].split(":"))
+                
+                # Check for Iftar Dua (2 minutes after Iftar)
+                cur_total = h * 60 + m
+                iftar_total = h_i * 60 + m_i
+                
+                if iftar_total <= cur_total < iftar_total + 2:
+                    new_mode = "IFTAR_DUA"
+                else:
+                    diff_s = ((h_s*60+m_s)*60) - ((h*60+m)*60+s)
+                    diff_i = ((h_i*60+m_i)*60) - ((h*60+m)*60+s)
+                    if 0 < diff_s <= 300 or 0 < diff_i <= 300:
+                        new_mode = "COUNTDOWN"
+                        diff = diff_s if (0 < diff_s <= 300) else diff_i
+                    elif 30 <= s < 45 and day_num:
+                        new_mode = "DAY"
+
+        # --- EXECUTE DISPLAY ---
+        if new_mode == "IFTAR_DUA":
+            scroll_text("Allahumma laka sumtu, wa alaa rizqika aftartu.")
+            current_mode = "IFTAR_DUA"
+        elif new_mode == "EID_SCROLL":
+            if current_mode != "EID_SCROLL":
+                scroll_text("EID MUBARAK!", b_level=15)
+                current_mode = "EID_SCROLL"
+            display.fill(0)
+            display.show()
+        elif new_mode == "COUNTDOWN":
+            dm, ds = diff // 60, diff % 60
+            text = "{:d}:{:02d}".format(dm, ds)
+            display.fill(0)
+            if len(text) <= 4:
+                display.framebuf.text(text, 0, 0, 1)
+            else:
+                display.framebuf.text(text, -4, 0, 1)
+            display.show()
+            current_mode = "COUNTDOWN"
+        elif new_mode == "DAY":
+            if current_mode != "DAY":
+                scroll_text("DAY {}".format(day_num))
+                current_mode = "DAY"
+            display.fill(0)
+            display.text("D{}".format(day_num), 8, 0, 1)
+            display.show()
+        else:
+            current_mode = "TIME"
+            draw_clock(h, m, s % 2 == 0)
 
 if __name__ == "__main__":
     main_loop()
