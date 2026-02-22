@@ -115,6 +115,8 @@ def main_loop():
     current_mode = "TIME"
     last_sec = -1
     
+    last_trigger_min = -1
+    
     while True:
         gc.collect()
         now = time.localtime()
@@ -128,24 +130,25 @@ def main_loop():
         last_sec = s
 
         # --- AUDIO TRIGGERS ---
-        if is_eid:
-            # Adhan at 4:35 AM on Eid day
-            if h == 4 and m == 35 and s == 0:
-                trigger_audio(ADHAN_URL)
-            # Takbeer every 15 mins between 7am and 9am
-            if 7 <= h <= 9:
-                if m % 15 == 0 and s == 0:
+        if m != last_trigger_min:
+            if is_eid:
+                # Adhan at 4:35 AM on Eid day
+                if h == 4 and m == 35:
+                    trigger_audio(ADHAN_URL)
+                    last_trigger_min = m
+                # Takbeer every 15 mins between 7am and 9am
+                if 7 <= h <= 9 and m % 15 == 0:
                     if h < 9 or (h == 9 and m == 0):
                         trigger_audio(TAKBEER_URL)
-        else:
-            sched, day_num = get_today_schedule()
-            if sched:
-                h_s, m_s = map(int, sched["sahoor"].split(":"))
-                h_i, m_i = map(int, sched["iftar"].split(":"))
-                if h == h_s and m == m_s and s == 0: 
-                    trigger_audio(ADHAN_URL)
-                if h == h_i and m == m_i and s == 0: 
-                    trigger_audio(ADHAN_URL)
+                        last_trigger_min = m
+            else:
+                sched, day_num = get_today_schedule()
+                if sched:
+                    h_s, m_s = map(int, sched["sahoor"].split(":"))
+                    h_i, m_i = map(int, sched["iftar"].split(":"))
+                    if (h == h_s and m == m_s) or (h == h_i and m == m_i):
+                        trigger_audio(ADHAN_URL)
+                        last_trigger_min = m
 
         # --- DISPLAY MODES ---
         new_mode = "TIME"
