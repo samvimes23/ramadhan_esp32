@@ -9,16 +9,16 @@ from machine import Pin, SPI
 from max7219 import Matrix8x8
 
 # --- CONFIGURATION ---
-WIFI_SSID = "Homelan"
-WIFI_PASS = "Ihatecheese"
+WIFI_SSID = "GuestBedroom"
+WIFI_PASS = "CheesyWotsits"
 SCHEDULE_FILE = "schedule.json"
 EID_DATE = "2026-03-20"
 
 HA_URL = "http://192.168.1.22:8123/api/services/media_player/play_media"
 HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4YzJjOGFlMTFhNzU0MDQ0YjA4MTZhN2I0ZmM4NGQ0OSIsImlhdCI6MTc3MTM2NDU2MSwiZXhwIjoyMDg2NzI0NTYxfQ._TDC37qVaQUfTIxBbIpg8VbjSGN4Gie-n_DYCYQcD9Q"
 HA_ENTITY_ID = "media_player.bedroom_speaker" 
-ADHAN_URL = "http://192.168.1.22:8123/api/file_upload/019c7ecd944de0a65bfeb119c444b67f" 
-TAKBEER_URL = "http://192.168.1.22:8123/api/file_upload/019c85a21a3436b402ac33c30cfc65fe"
+ADHAN_URL = "media-source://media_source/local/adhan_final.mp3" 
+TAKBEER_URL = "media-source://media_source/local/takbeer.mp3"
 
 SCK_PIN = 6
 MOSI_PIN = 7
@@ -30,32 +30,9 @@ cs = Pin(CS_PIN, Pin.OUT)
 display = Matrix8x8(spi, cs, 4)
 
 def trigger_audio(url):
-    print("DEBUG: Triggering Audio:", url)
-    display.fill(0)
-    display.show()
-    time.sleep(0.5)
-    
-    gc.collect()
-    headers = {"Authorization": "Bearer " + HA_TOKEN, "Content-Type": "application/json"}
-    
-    data = {
-        "entity_id": HA_ENTITY_ID,
-        "media_content_id": url,
-        "media_content_type": "music" 
-    }
-    
-    try:
-        # Set volume to 50%
-        v_url = HA_URL.replace("play_media", "volume_set")
-        urequests.post(v_url, json={"entity_id": HA_ENTITY_ID, "volume_level": 0.5}, headers=headers, timeout=5).close()
-        
-        r = urequests.post(HA_URL, json=data, headers=headers, timeout=15)
-        print("DEBUG: HA Status:", r.status_code)
-        r.close()
-    except Exception as e:
-        print("DEBUG: HA Error:", e)
-    
-    time.sleep(1)
+    # Audio triggering moved to laptop cron for reliability
+    print("DEBUG: Audio trigger bypassed for ESP32:", url)
+    return
 
 def connect_and_sync():
     wlan = network.WLAN(network.STA_IF)
@@ -128,6 +105,8 @@ def main_loop():
             time.sleep(0.1)
             continue
         last_sec = s
+        if s % 10 == 0:
+            print("Time: {:02d}:{:02d}:{:02d} - Free Mem: {}".format(h, m, s, gc.mem_free()))
 
         # --- AUDIO TRIGGERS ---
         if m != last_trigger_min:
