@@ -1,3 +1,4 @@
+import os
 import network
 import time
 import ntptime
@@ -9,13 +10,27 @@ from machine import Pin, SPI
 from max7219 import Matrix8x8
 
 # --- CONFIGURATION ---
-WIFI_SSID = "GuestBedroom"
-WIFI_PASS = "CheesyWotsits"
+try:
+    from wifi_secrets import WIFI_SSID, WIFI_PASSWORD as WIFI_PASS
+except ImportError:
+    WIFI_SSID = "YOUR_WIFI_SSID"
+    WIFI_PASS = "YOUR_WIFI_PASSWORD"
 SCHEDULE_FILE = "schedule.json"
 EID_DATE = "2026-03-20"
 
 HA_URL = "http://192.168.1.22:8123/api/services/media_player/play_media"
-HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4YzJjOGFlMTFhNzU0MDQ0YjA4MTZhN2I0ZmM4NGQ0OSIsImlhdCI6MTc3MTM2NDU2MSwiZXhwIjoyMDg2NzI0NTYxfQ._TDC37qVaQUfTIxBbIpg8VbjSGN4Gie-n_DYCYQcD9Q"
+def _load_ha_token():
+    token = os.getenv("HA_TOKEN")
+    if token:
+        return token
+    try:
+        with open(os.path.expanduser("~/.config/home-assistant/config.json"), "r", encoding="utf-8") as f:
+            return json.load(f)["token"]
+    except Exception as exc:
+        raise RuntimeError("Set HA_TOKEN or configure ~/.config/home-assistant/config.json") from exc
+
+HA_TOKEN = _load_ha_token()
+
 HA_ENTITY_ID = "media_player.bedroom_speaker" 
 ADHAN_URL = "media-source://media_source/local/adhan_final.mp3" 
 TAKBEER_URL = "media-source://media_source/local/takbeer.mp3"

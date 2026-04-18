@@ -1,0 +1,110 @@
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Fajr is already up to date (05:00).
+Dhuhr is already up to date (13:09).
+Asr is already up to date (16:41).
+Maghrib is already up to date (19:40).
+Isha is already up to date (20:53).
+No crontab changes needed today.
+
+Step 2: Restarting adhan-manager (PM2)...
+Traceback (most recent call last):
+  File "/home/hammadkhan/.openclaw/workspace/projects/ramadhan_esp32/update_adhan.py", line 28, in <module>
+    run()
+    ~~~^^
+  File "/home/hammadkhan/.openclaw/workspace/projects/ramadhan_esp32/update_adhan.py", line 23, in run
+    subprocess.run(["pm2", "restart", "adhan-manager"], capture_output=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/opt/python@3.14/lib/python3.14/subprocess.py", line 554, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/opt/python@3.14/lib/python3.14/subprocess.py", line 1038, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        pass_fds, cwd, env,
+                        ^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+                        gid, gids, uid, umask,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+                        start_new_session, process_group)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/opt/python@3.14/lib/python3.14/subprocess.py", line 1989, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'pm2'
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Fajr is already up to date (04:58).
+Dhuhr is already up to date (13:09).
+Asr is already up to date (16:42).
+Maghrib is already up to date (19:42).
+Isha is already up to date (20:55).
+No crontab changes needed today.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Fajr is already up to date (04:56).
+Dhuhr is already up to date (13:09).
+Asr is already up to date (16:43).
+Maghrib is already up to date (19:44).
+Isha is already up to date (20:56).
+No crontab changes needed today.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Updating Fajr: 04:56 (enabled=True) -> 04:53 (enabled=True)
+Updating Dhuhr: 13:09 (enabled=True) -> 13:08 (enabled=True)
+Updating Asr: 16:43 (enabled=True) -> 16:44 (enabled=True)
+Updating Maghrib: 19:44 (enabled=True) -> 19:45 (enabled=True)
+Updating Isha: 20:56 (enabled=True) -> 20:57 (enabled=True)
+Crontab updated successfully from JSON.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Fajr is already up to date (04:51).
+Dhuhr is already up to date (13:08).
+Asr is already up to date (16:45).
+Maghrib is already up to date (19:47).
+Isha is already up to date (20:59).
+No crontab changes needed today.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Updating Fajr: 04:51 (enabled=True) -> 04:49 (enabled=True)
+Dhuhr is already up to date (13:08).
+Asr is already up to date (16:45).
+Updating Maghrib: 19:47 (enabled=True) -> 19:49 (enabled=True)
+Updating Isha: 20:59 (enabled=True) -> 21:00 (enabled=True)
+Crontab updated successfully from JSON.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Fajr is already up to date (04:47).
+Dhuhr is already up to date (13:07).
+Asr is already up to date (16:46).
+Maghrib is already up to date (19:50).
+Isha is already up to date (21:02).
+No crontab changes needed today.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---
+--- Adhan Update Start: hammadkhan-Latitude-5330 ---
+Step 1: Applying from prayer_times.json...
+Fajr is already up to date (04:44).
+Dhuhr is already up to date (13:07).
+Asr is already up to date (16:47).
+Maghrib is already up to date (19:52).
+Isha is already up to date (21:03).
+No crontab changes needed today.
+
+Step 2: Restarting adhan-manager (PM2)...
+--- Adhan Update Complete ---

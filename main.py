@@ -7,8 +7,11 @@ from machine import Pin, SPI, I2S
 from max7219 import Matrix8x8 # You will need a max7219 library
 
 # Configuration
-WIFI_SSID = "Your_WiFi_SSID"
-WIFI_PASS = "Your_WiFi_Password"
+try:
+    from wifi_secrets import WIFI_SSID, WIFI_PASSWORD as WIFI_PASS
+except ImportError:
+    WIFI_SSID = "YOUR_WIFI_SSID"
+    WIFI_PASS = "YOUR_WIFI_PASSWORD"
 SCHEDULE_FILE = "schedule.json"
 
 # Hardware Pins

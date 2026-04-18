@@ -1,9 +1,21 @@
+import os
 import sys
 import requests
 import json
 
 HA_URL = "http://192.168.1.22:8123/api/services/media_player/play_media"
-HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4YzJjOGFlMTFhNzU0MDQ0YjA4MTZhN2I0ZmM4NGQ0OSIsImlhdCI6MTc3MTM2NDU2MSwiZXhwIjoyMDg2NzI0NTYxfQ._TDC37qVaQUfTIxBbIpg8VbjSGN4Gie-n_DYCYQcD9Q"
+def _load_ha_token():
+    token = os.getenv("HA_TOKEN")
+    if token:
+        return token
+    try:
+        with open(os.path.expanduser("~/.config/home-assistant/config.json"), "r", encoding="utf-8") as f:
+            return json.load(f)["token"]
+    except Exception as exc:
+        raise RuntimeError("Set HA_TOKEN or configure ~/.config/home-assistant/config.json") from exc
+
+HA_TOKEN = _load_ha_token()
+
 HA_ENTITY_ID = "media_player.bedroom_speaker"
 
 def trigger(media_url, volume=0.8):
@@ -27,6 +39,7 @@ def trigger(media_url, volume=0.8):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 trigger_ha.py <media_url>")
+        print("Usage: python3 trigger_ha.py <media_url> [volume]")
     else:
-        trigger(sys.argv[1])
+        vol = float(sys.argv[2]) if len(sys.argv) > 2 else 0.8
+        trigger(sys.argv[1], vol)

@@ -6,12 +6,23 @@ from datetime import datetime
 
 # --- CONFIGURATION ---
 HA_URL = "http://192.168.1.22:8123/api/services/media_player/play_media"
-HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4YzJjOGFlMTFhNzU0MDQ0YjA4MTZhN2I0ZmM4NGQ0OSIsImlhdCI6MTc3MTM2NDU2MSwiZXhwIjoyMDg2NzI0NTYxfQ._TDC37qVaQUfTIxBbIpg8VbjSGN4Gie-n_DYCYQcD9Q"
+def _load_ha_token():
+    token = os.getenv("HA_TOKEN")
+    if token:
+        return token
+    try:
+        with open(os.path.expanduser("~/.config/home-assistant/config.json"), "r", encoding="utf-8") as f:
+            return json.load(f)["token"]
+    except Exception as exc:
+        raise RuntimeError("Set HA_TOKEN or configure ~/.config/home-assistant/config.json") from exc
+
+HA_TOKEN = _load_ha_token()
+
 HA_ENTITY_ID = "media_player.bedroom_speaker"
-ADHAN_URL = "http://192.168.1.100:8002/adhan_final.mp3"
-TAKBEER_URL = "http://192.168.1.100:8002/takbeer.mp3"
-SCHEDULE_FILE = "projects/ramadhan_esp32/schedule.json"
-STATE_FILE = "cron_state.json"
+ADHAN_URL = "http://192.168.1.100:8000/audio/adhan_final.mp3"
+TAKBEER_URL = "http://192.168.1.100:8000/audio/takbeer.mp3"
+SCHEDULE_FILE = "/home/hammadkhan/.openclaw/workspace/projects/ramadhan_esp32/schedule.json"
+STATE_FILE = "/home/hammadkhan/.openclaw/workspace/projects/ramadhan_esp32/cron_state.json"
 EID_DATE = "2026-03-20"
 
 def trigger_audio(url, volume=0.8):
