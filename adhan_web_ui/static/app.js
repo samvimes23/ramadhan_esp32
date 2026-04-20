@@ -30,14 +30,18 @@ function renderJobs() {
     const title = node.querySelector(".card-title");
     const meta = node.querySelector(".job-meta");
     const timeInput = node.querySelector('input[type="time"]');
-    const toggle = node.querySelector('input[type="checkbox"]');
+    const toggle = node.querySelector('.toggle-success');
+    const overrideToggle = node.querySelector('.override-toggle');
+    const overrideBadge = node.querySelector('.override-status-badge');
     const stateBadge = node.querySelector(".job-state");
 
     title.textContent = job.label;
     meta.textContent = prayerMeta(job);
     timeInput.value = job.time;
     toggle.checked = job.enabled;
+    overrideToggle.checked = job.manual_override || false;
     syncStateBadge(stateBadge, toggle.checked);
+    syncOverrideBadge(overrideBadge, overrideToggle.checked);
 
     timeInput.addEventListener("input", () => {
       job.time = timeInput.value;
@@ -52,6 +56,13 @@ function renderJobs() {
       setStatus(`${state.dirty.size} change(s) pending`, "warning");
     });
 
+    overrideToggle.addEventListener("change", () => {
+      job.manual_override = overrideToggle.checked;
+      state.dirty.add(job.id);
+      syncOverrideBadge(overrideBadge, overrideToggle.checked);
+      setStatus(`${state.dirty.size} change(s) pending`, "warning");
+    });
+
     if (state.dirty.has(job.id)) {
       card.classList.add("ring", "ring-warning", "ring-offset-2");
     }
@@ -63,6 +74,11 @@ function renderJobs() {
 function syncStateBadge(node, enabled) {
   node.textContent = enabled ? "Enabled" : "Disabled";
   node.className = `badge badge-outline badge-lg ${enabled ? "badge-success" : "badge-error"} job-state`;
+}
+
+function syncOverrideBadge(node, manual) {
+  node.textContent = manual ? "Manual" : "Auto";
+  node.className = `badge badge-sm ${manual ? "badge-warning" : "badge-ghost opacity-50"} override-status-badge`;
 }
 
 async function loadJobs() {
@@ -85,7 +101,7 @@ async function loadJobs() {
 async function saveJobs() {
   const dirtyJobs = state.jobs
     .filter((job) => state.dirty.has(job.id))
-    .map(({ id, enabled, time }) => ({ id, enabled, time }));
+    .map(({ id, enabled, time, manual_override }) => ({ id, enabled, time, manual_override }));
 
   if (dirtyJobs.length === 0) {
     setStatus("No changes to apply", "info");

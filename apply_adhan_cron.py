@@ -34,15 +34,28 @@ def apply_updates():
         print(f"No prayer times found for {day_str} {month_str} {year_str} in {LOOKUP_FILE}")
         return
 
-    # Map Dhuhr to Zuhr if needed (the UI/Manager uses "Dhuhr")
-    # Our JSON currently uses "Dhuhr", so it should match.
-    
+    # Load Overrides
+    OVERRIDE_FILE = "/home/hammadkhan/.openclaw/workspace/logs/adhan_overrides.json"
+    overrides = {}
+    if os.path.exists(OVERRIDE_FILE):
+        try:
+            with open(OVERRIDE_FILE, "r") as f:
+                overrides = json.load(f)
+        except Exception:
+            pass
+
     manager = AdhanCronManager()
     current_jobs = manager.list_jobs()
     
     updates = []
     for job in current_jobs:
         prayer_name = job.label # Fajr, Dhuhr, Asr, Maghrib, Isha
+        
+        # Skip if manual override is active for this prayer
+        if overrides.get(prayer_name):
+            print(f"Skipping {prayer_name} update (Manual Override active).")
+            continue
+
         if prayer_name in day_times:
             new_time = day_times[prayer_name]
             # Ensure the job stays enabled when updating from the reliable JSON

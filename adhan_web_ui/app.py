@@ -9,20 +9,25 @@ from pydantic import BaseModel, Field
 
 from cron_manager import AdhanCronManager, CronError
 
+from override_manager import OverrideManager
+
 BASE_DIR = Path(__file__).resolve().parent
 WORKSPACE_DIR = BASE_DIR.parent.parent.parent
 FAJR_STATUS_FILE = WORKSPACE_DIR / "logs" / "fajr_update_status.json"
+OVERRIDE_FILE = WORKSPACE_DIR / "logs" / "adhan_overrides.json"
 
 app = FastAPI(title="Adhan Cron Manager")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 manager = AdhanCronManager()
+overrides = OverrideManager(OVERRIDE_FILE)
 
 
 class JobUpdate(BaseModel):
     id: str
     enabled: bool
     time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    manual_override: bool | None = None
 
 
 class UpdateRequest(BaseModel):
@@ -93,6 +98,7 @@ def list_jobs() -> dict:
     except CronError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    current_overrides = overrides.get_overrides()
     return {
         "jobs": [
             {
@@ -102,6 +108,7 @@ def list_jobs() -> dict:
                 "time": job.time,
                 "audio_url": job.audio_url,
                 "volume": job.volume,
+                "manual_override": current_overrides.get(job.label, False) if job.label else False,
             }
             for job in jobs
         ]
@@ -112,9 +119,20 @@ def list_jobs() -> dict:
 def update_jobs(request: UpdateRequest) -> dict:
     try:
         jobs = manager.update_jobs([job.model_dump() for job in request.jobs])
+        
+        # Sync overrides
+        all_jobs = manager.list_jobs()
+        job_map = {j.job_id: j for j in all_jobs}
+        for update in request.jobs:
+            if update.manual_override is not None:
+                job = job_map.get(update.id)
+                if job and job.label:
+                    overrides.set_override(job.label, update.manual_override)
+                    
     except CronError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    current_overrides = overrides.get_overrides()
     return {
         "jobs": [
             {
@@ -124,6 +142,7 @@ def update_jobs(request: UpdateRequest) -> dict:
                 "time": job.time,
                 "audio_url": job.audio_url,
                 "volume": job.volume,
+                "manual_override": current_overrides.get(job.label, False) if job.label else False,
             }
             for job in jobs
         ]

@@ -118,7 +118,17 @@
               </div>
               <input type="time" class="input input-bordered w-full bg-white/80" required />
             </label>
-            <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-emerald-950/90 px-4 py-3 text-emerald-50">
+            <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-slate-100 px-4 py-3 text-slate-800 border border-slate-200">
+              <div>
+                <p class="text-xs uppercase tracking-[0.28em] text-slate-500">Manual Override</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="badge badge-sm override-status-badge">Auto</span>
+                  <p class="text-sm font-medium">Prevent auto-updates</p>
+                </div>
+              </div>
+              <input type="checkbox" class="toggle toggle-warning toggle-lg override-toggle" />
+            </div>
+            <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-emerald-950/90 px-4 py-3 text-emerald-50">
               <div>
                 <p class="text-xs uppercase tracking-[0.28em] text-emerald-200">Job status</p>
                 <p class="text-sm font-medium">Use the switch to comment or uncomment the cron line.</p>
