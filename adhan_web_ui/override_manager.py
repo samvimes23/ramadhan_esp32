@@ -17,12 +17,11 @@ class OverrideManager:
             json.dump(data, f, indent=2)
 
     def get_overrides(self) -> dict[str, bool]:
-        with self._lock:
-            try:
-                with open(self.path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, FileNotFoundError):
-                return {}
+        try:
+            with open(self.path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            return {}
 
     def set_override(self, prayer_id: str, manual: bool) -> None:
         with self._lock:

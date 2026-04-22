@@ -118,16 +118,20 @@ def list_jobs() -> dict:
 @app.put("/api/jobs")
 def update_jobs(request: UpdateRequest) -> dict:
     try:
-        jobs = manager.update_jobs([job.model_dump() for job in request.jobs])
+        # 1. Map labels to existing IDs BEFORE updating crontab
+        # (IDs change when time/enabled state changes)
+        all_jobs_before = manager.list_jobs()
+        id_to_label = {j.job_id: j.label for j in all_jobs_before if j.label}
         
-        # Sync overrides
-        all_jobs = manager.list_jobs()
-        job_map = {j.job_id: j for j in all_jobs}
+        # 2. Perform the crontab update
+        manager.update_jobs([job.model_dump() for job in request.jobs])
+        
+        # 3. Apply overrides using the label captured before the ID changed
         for update in request.jobs:
             if update.manual_override is not None:
-                job = job_map.get(update.id)
-                if job and job.label:
-                    overrides.set_override(job.label, update.manual_override)
+                label = id_to_label.get(update.id)
+                if label:
+                    overrides.set_override(label, update.manual_override)
                     
     except CronError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
