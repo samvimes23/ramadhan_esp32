@@ -180,7 +180,7 @@
 
       async function loadPrayerTimes() {
         try {
-          const response = await fetch('/api/prayer-times');
+          const response = await fetch('../api/prayer-times');
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           
           prayerData = await response.json();
