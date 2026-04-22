@@ -26,7 +26,7 @@ overrides = OverrideManager(OVERRIDE_FILE)
 class JobUpdate(BaseModel):
     id: str
     enabled: bool
-    time: str = Field(pattern=r"^\d{2}:\d{2}$")
+    time: str # Remove strict pattern to avoid browser/Pydantic mismatches on some mobile devices
     manual_override: bool | None = None
 
 
