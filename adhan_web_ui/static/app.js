@@ -29,7 +29,7 @@ function renderJobs() {
     const card = node.querySelector("article");
     const title = node.querySelector(".card-title");
     const meta = node.querySelector(".job-meta");
-    const timeInput = node.querySelector('input[type="time"]');
+    const timeInput = node.querySelector('input[type="text"]');
     const toggle = node.querySelector('.toggle-success');
     const overrideToggle = node.querySelector('.override-toggle');
     const overrideBadge = node.querySelector('.override-status-badge');
