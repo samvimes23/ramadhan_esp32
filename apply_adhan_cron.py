@@ -58,15 +58,20 @@ def apply_updates():
 
         if prayer_name in day_times:
             new_time = day_times[prayer_name]
-            # Ensure the job stays enabled when updating from the reliable JSON
-            is_enabled = True 
-            if job.time != new_time or not job.enabled:
-                print(f"Updating {prayer_name}: {job.time} (enabled={job.enabled}) -> {new_time} (enabled=True)")
+            
+            # Use current state as default to respect user's manual "Off" switch
+            # unless it's a time-only update.
+            is_enabled = job.enabled 
+            
+            if job.time != new_time:
+                print(f"Updating {prayer_name} time: {job.time} -> {new_time} (enabled={is_enabled})")
                 updates.append({
                     "id": job.job_id,
                     "time": new_time,
                     "enabled": is_enabled
                 })
+            elif not job.enabled:
+                print(f"{prayer_name} is currently DISABLED. Respecting this state.")
             else:
                 print(f"{prayer_name} is already up to date ({new_time}).")
         else:
